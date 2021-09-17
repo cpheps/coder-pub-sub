@@ -54,11 +54,16 @@ func New(addr string, broadcastConcurrency int) (*PubSubServer, error) {
 // ListenAndServe starts the server and blocks until the server returns.
 // The server can be closed via the Close call
 func (s *PubSubServer) ListenAndServe() error {
+	log.Println("PubSub server listening on", s.srv.Addr)
+	log.Println("Endpoints:")
+	log.Println("GET /subscribe")
+	log.Println("POST /subscribe")
 	return s.srv.ListenAndServe()
 }
 
 // Close causes a graceful shutdown of the server
 func (s *PubSubServer) Close() error {
+	log.Println("Closing server")
 	// Close the done channel to stop all blocking handlers
 	close(s.doneChan)
 	s.broadcaster.CloseConnections()
@@ -67,10 +72,14 @@ func (s *PubSubServer) Close() error {
 
 // RegisterSubscriber registers a subscriber with the server and opens up a websocket
 func (s *PubSubServer) RegisterSubscriber(w http.ResponseWriter, r *http.Request) {
+	log.Println("Registering a subscriber")
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Error while upgrading connection to websocket", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		s.writeResponse(w, http.StatusInternalServerError, &errorResponse{
+			Message: "Internal Error",
+		})
+		return
 	}
 
 	// Register the connection
@@ -82,6 +91,7 @@ func (s *PubSubServer) RegisterSubscriber(w http.ResponseWriter, r *http.Request
 
 // Publish publishes a messsage to all subscribers
 func (s *PubSubServer) Publish(w http.ResponseWriter, r *http.Request) {
+	log.Println("Publising message")
 	// Parse the message body
 	defer r.Body.Close()
 	msg, err := io.ReadAll(r.Body)
@@ -100,6 +110,7 @@ func (s *PubSubServer) Publish(w http.ResponseWriter, r *http.Request) {
 		s.writeResponse(w, http.StatusInternalServerError, &errorResponse{
 			Message: "Internal Error",
 		})
+		return
 	}
 
 	// Success no content

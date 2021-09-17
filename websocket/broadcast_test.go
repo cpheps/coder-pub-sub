@@ -110,6 +110,7 @@ func Test_CacheBroadCaster_Broadcast(t *testing.T) {
 
 				mockConn := &MockWebsocketConnection{}
 				mockConn.On("NextWriter", messageType).Return(mockWriter, nil)
+				mockWriter.On("Close").Return(nil)
 
 				broadcaster, err := NewCacheBroadcaster(1)
 				assert.NoError(t, err)
