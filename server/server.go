@@ -88,7 +88,7 @@ func (s *PubSubServer) Publish(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error while reading message body", err)
 		s.writeResponse(w, http.StatusBadRequest, &errorResponse{
-			message: "failed to read message",
+			Message: "failed to read message",
 		})
 		return
 	}
@@ -98,7 +98,7 @@ func (s *PubSubServer) Publish(w http.ResponseWriter, r *http.Request) {
 	if err := s.broadcaster.Broadcast(r.Context(), websocket.TextMessage, msg); err != nil {
 		log.Println("Broadcase failure", err)
 		s.writeResponse(w, http.StatusInternalServerError, &errorResponse{
-			message: "Internal Error",
+			Message: "Internal Error",
 		})
 	}
 
