@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 
+	"github.com/cpheps/coder-pub-sub/server"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,21 +18,29 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
+	// Setup signal context
+	signalCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
 
-	http.HandleFunc("/", WebSocket)
-	if err := http.ListenAndServe(":8080", nil); !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalln("Server Failed", err)
-	}
-}
-
-func WebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	pubsubServer, err := server.New(":8080", 10)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalln("Failed to init server", err)
 	}
 
-	defer conn.Close()
-	conn.WriteJSON("hi")
-	conn.WriteJSON("there")
+	// Spin server off in goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- pubsubServer.ListenAndServe()
+	}()
+
+	select {
+	case <-signalCtx.Done():
+		if err := pubsubServer.Close(); err != nil {
+			log.Fatalln("Error while closing server", err)
+		}
+	case err := <-errChan:
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalln("Server closed with error", err)
+		}
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -16,6 +17,9 @@ type Broadcaster interface {
 	// Broadcast sends the bytes of messageType to all websockets.
 	// Returns and error if a single send fails
 	Broadcast(ctx context.Context, messageType MessageType, msg []byte) error
+
+	// CloseConnections closes all registered connections
+	CloseConnections()
 }
 
 var _ (Broadcaster) = (*CacheBroadcaster)(nil)
@@ -43,6 +47,19 @@ func NewCacheBroadcaster(concurrency int) (*CacheBroadcaster, error) {
 // RegisterConnection registers a connection with the Broadcaster
 func (cb *CacheBroadcaster) RegisterConnection(conn WebsocketConnection) {
 	cb.conns = append(cb.conns, conn)
+}
+
+// CloseConnections closes all registered connections
+// Will log any errors
+func (cb *CacheBroadcaster) CloseConnections() {
+	for _, conn := range cb.conns {
+		if err := conn.Close(); err != nil {
+			log.Println("Error while closing websocket", err)
+		}
+	}
+
+	// After all connections are closed clean our connection tracking
+	cb.conns = make([]WebsocketConnection, 0)
 }
 
 // Broadcast sends the bytes of messageType to all websockets.

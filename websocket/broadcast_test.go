@@ -59,6 +59,20 @@ func Test_CacheBroadCaster_RegisterConnection(t *testing.T) {
 	assert.Equal(t, connection, broadcaster.conns[0])
 }
 
+func Test_CacheBroadCaster_CloseConnections(t *testing.T) {
+	broadcaster, err := NewCacheBroadcaster(1)
+	assert.NoError(t, err)
+
+	// Create an empty connection since we don't care if it works
+	mockConn := &MockWebsocketConnection{}
+	mockConn.On("Close").Return(nil)
+
+	broadcaster.RegisterConnection(mockConn)
+	broadcaster.CloseConnections()
+
+	assert.Len(t, broadcaster.conns, 0)
+}
+
 func Test_CacheBroadCaster_Broadcast(t *testing.T) {
 	testCases := []struct {
 		desc     string
