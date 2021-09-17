@@ -34,6 +34,8 @@ func New(addr string) *PubSubServer {
 	// Register Post only for publish
 	r.HandleFunc("/publish", pubSubServer.Publish).Methods(http.MethodPost)
 
+	// Set mux on the server
+	pubSubServer.srv.Handler = r
 	return pubSubServer
 }
 

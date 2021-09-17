@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"io"
 	"net/http"
 
 	gwebsocket "github.com/gorilla/websocket"
@@ -27,12 +28,24 @@ func (gu *GorillaUpgrader) Upgrade(w http.ResponseWriter, r *http.Request, respo
 		return nil, err
 	}
 
-	return &GorillaConn{conn}, nil
+	return &GorillaConn{
+		conn: conn,
+	}, nil
 }
 
 var _ (WebsocketConnection) = (*GorillaConn)(nil)
 
 // GorillaConn is a wrapper around the gorilla/websocket Conn to satisfy the WebsocketConnection interface
 type GorillaConn struct {
-	*gwebsocket.Conn
+	conn *gwebsocket.Conn
+}
+
+// NextWriter returns a writer for the next message to send
+func (gc *GorillaConn) NextWriter(messageType MessageType) (io.WriteCloser, error) {
+	return gc.conn.NextWriter(int(messageType))
+}
+
+// Close closes the websocket connection
+func (gc *GorillaConn) Close() error {
+	return gc.conn.Close()
 }
