@@ -57,7 +57,7 @@ func (s *PubSubServer) ListenAndServe() error {
 	log.Println("PubSub server listening on", s.srv.Addr)
 	log.Println("Endpoints:")
 	log.Println("GET /subscribe")
-	log.Println("POST /subscribe")
+	log.Println("POST /publish")
 	return s.srv.ListenAndServe()
 }
 

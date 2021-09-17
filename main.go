@@ -9,13 +9,7 @@ import (
 	"os/signal"
 
 	"github.com/cpheps/coder-pub-sub/server"
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  0,
-	WriteBufferSize: 1024,
-}
 
 func main() {
 	// Setup signal context
@@ -33,6 +27,7 @@ func main() {
 		errChan <- pubsubServer.ListenAndServe()
 	}()
 
+	// Wait for a single to close or the server to exit
 	select {
 	case <-signalCtx.Done():
 		if err := pubsubServer.Close(); err != nil {

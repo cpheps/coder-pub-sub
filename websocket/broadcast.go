@@ -108,7 +108,7 @@ func broadcastWorker(ctx context.Context, socketChan <-chan WebsocketConnection,
 			for written := 0; written < len(msg); {
 				numBytes, err := writer.Write(msg[written:])
 				if err != nil {
-					// Ignore error in purpose here. We don't really care if we fail to close just make an attempt.
+					// Ignore error on purpose here. We don't really care if we fail to close just make an attempt.
 					// It's likely the pipe is broken if we've hit an error so closing a broken pipe will likely result in another error
 					writer.Close()
 					return fmt.Errorf("failed while writing to websocket: %w", err)
